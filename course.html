@@ -131,12 +131,13 @@
               <span class="lm-meta">веб-гоммаж после «${lesson.work}» (${lesson.year})</span>
             </div>
             <div class="lm-body">
-              <div class="lm-canvas" id="gaHolder" style="grid-column: 1 / -1;"></div>
+              <div class="ga-holder" id="gaHolder"></div>
             </div>
             <p class="ga-hint">Управление: <code>${lesson.controls}</code>. Это художественная отсылка к оригиналу, а не копия: она повторяет механику и настроение работы ${lesson.artist}.</p>
             <div class="ga-actions">
               <button class="btn btn-primary" id="gaRestart">↺ Начать заново</button>
               <a class="btn btn-ghost" href="arcade.html">Витрина всех работ →</a>
+              <a class="btn btn-ghost" href="${lesson.official.url}" target="_blank" rel="noopener">Оригинал — ${lesson.official.label} ↗</a>
               <span class="ga-score" id="gaScore"></span>
             </div>
           </div>

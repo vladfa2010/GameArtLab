@@ -3,6 +3,7 @@
    ============================================================ */
 
 /* --- игровой модуль в уроке --- */
+.ga-holder { grid-column: 1 / -1; }
 .ga-shell { position: relative; width: 100%; }
 .ga-canvas {
   display: block;
@@ -35,27 +36,25 @@
 }
 .ga-score b { color: #79A0FF; font-weight: 600; }
 
-/* тач-кнопки (мобильные) */
+/* тач-кнопки (мобильные) — строка под игровым полем */
 .ga-touch {
-  position: absolute;
-  inset: auto 0 34px 0;
   display: none;
-  justify-content: space-between;
-  padding: 0 14px;
-  pointer-events: none;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 14px;
 }
 .ga-tbtn {
-  pointer-events: auto;
-  width: 52px; height: 52px;
+  width: 54px; height: 54px;
   border-radius: 50%;
   border: 1px solid rgba(255,255,255,0.35);
-  background: rgba(20,20,26,0.55);
+  background: rgba(20,20,26,0.9);
   color: #fff;
   font-size: 18px;
-  backdrop-filter: blur(2px);
   touch-action: none;
+  -webkit-tap-highlight-color: transparent;
 }
-.ga-tbtn:active { background: rgba(121,160,255,0.4); }
+.ga-tbtn:active { background: rgba(121,160,255,0.45); border-color: #79A0FF; }
 @media (pointer: coarse) {
   .ga-touch { display: flex; }
   .ga-touch:empty { display: none; }
