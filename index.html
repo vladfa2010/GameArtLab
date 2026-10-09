@@ -180,12 +180,23 @@
       }
       function pine(ctx, x, baseY, h, w, color) {
         ctx.fillStyle = color;
-        const steps = 5;
-        for (let i = 0; i < steps; i++) {
-          const yy = baseY - h + Math.round((h / steps) * i);
-          const ww = Math.max(2, Math.round(w * (0.3 + 0.7 * (i / steps))));
-          ctx.fillRect(Math.round(x - ww / 2), yy, ww, Math.ceil(h / steps) + 1);
+        const xi = Math.round(x);
+        const trunkH = Math.max(2, Math.round(h * 0.1));
+        // ствол
+        ctx.fillRect(xi - 1, Math.round(baseY) - trunkH, 3, trunkH + 1);
+        // крона: сужающиеся кверху ярусы с зубцами — силуэт ели
+        const top = Math.round(baseY) - h;
+        const bodyH = h - trunkH;
+        const segs = Math.max(5, Math.round(bodyH / 7));
+        for (let i = 0; i < segs; i++) {
+          const f = i / (segs - 1);
+          const yy = Math.round(top + f * bodyH);
+          const hh = Math.max(2, Math.round(bodyH / segs));
+          let ww = Math.round(w * (0.14 + 0.86 * f));
+          if (i % 2 === 1) ww = Math.max(2, Math.round(ww * 0.74)); // зигзаг краёв
+          ctx.fillRect(xi - (ww >> 1), yy, ww, hh + (i === segs - 1 ? 2 : 1));
         }
+        ctx.fillRect(xi - 1, top - 3, 3, 4); // остриё
       }
       function bolt(ctx, seed, W, flash) {
         const x0 = 60 + seed * (W - 120);
@@ -205,14 +216,8 @@
         ctx.stroke();
       }
 
-      // 01 Курс: невысокий пиксельный лес, дождь и редкие молнии
+      // 01 Курс: невысокий пиксельный лес, дождь и редкие молнии; небо прозрачное, как на второй карточке
       setup('artCourse', (ctx, W, H, t) => {
-        const sky = ctx.createLinearGradient(0, 0, 0, H);
-        sky.addColorStop(0, '#070a14');
-        sky.addColorStop(1, '#0b1120');
-        ctx.fillStyle = sky;
-        ctx.fillRect(0, 0, W, H);
-
         // вспышка: цикл 9с, молния в последней доле цикла
         const cyc = Math.floor(t / 9);
         const ph = (t % 9) / 9;
@@ -232,23 +237,23 @@
 
         // лес: дальняя и ближняя древесные полосы
         for (let i = 0; i < 17; i++) {
-          pine(ctx, i * 40 + hash(i * 1.7) * 14, H, 38 + hash(i * 2.9) * 30, 16, '#16223a');
+          pine(ctx, i * 40 + hash(i * 1.7) * 14, H, 38 + hash(i * 2.9) * 30, 17, '#1a2742');
         }
         for (let i = 0; i < 12; i++) {
-          pine(ctx, i * 56 + hash(i * 4.3) * 20, H, 62 + hash(i * 6.1) * 46, 20, '#0a1220');
+          pine(ctx, i * 56 + hash(i * 4.3) * 20, H, 62 + hash(i * 6.1) * 46, 24, '#0d1526');
         }
         // земля
         ctx.fillStyle = '#070b14';
         ctx.fillRect(0, H - 4, W, 4);
 
-        // дождь — две глубины, дальняя светлее и медленнее
+        // дождь — две глубины, неторопливый
         for (let layer = 0; layer < 2; layer++) {
           const n = layer ? 60 : 45;
           ctx.fillStyle = layer ? 'rgba(150,180,255,0.4)' : 'rgba(150,180,255,0.16)';
           for (let i = 0; i < n; i++) {
             const k = i + layer * 100;
-            const sp = layer ? 300 : 170;
-            const x = (hash(k * 3.3) * (W + 40) + t * 22) % (W + 40) - 20;
+            const sp = layer ? 150 : 85;
+            const x = (hash(k * 3.3) * (W + 40) + t * 11) % (W + 40) - 20;
             const y = (hash(k * 7.9) * H + t * sp) % (H + 16) - 8;
             ctx.fillRect(x, y, layer ? 2 : 1, layer ? 11 : 7);
           }
