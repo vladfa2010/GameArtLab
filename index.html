@@ -153,7 +153,8 @@
       requestAnimationFrame(frame);
     })();
 
-    // Пиксель-арт в карточках путей: облака (после Arcangel) и восьмибитный пришелец
+    // Пиксель-арт в карточках путей: ночной лес с дождём и молниями (Курс),
+    // восьмибитная битва под звёздами — флотилия пришельцев против корабля (Витрина)
     (function () {
       const reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       function setup(id, draw) {
@@ -169,21 +170,98 @@
           if (!reduced) requestAnimationFrame(frame);
         })();
       }
-      function cloud(ctx, x, y, u, alpha) {
-        ctx.fillStyle = 'rgba(235,238,255,' + alpha + ')';
-        [[1, 5], [0, 7], [0, 7], [1, 5]].forEach((r, i) => ctx.fillRect(x + r[0] * u, y + i * u, r[1] * u, u));
-        ctx.fillRect(x + 2 * u, y - u, 3 * u, u);
-        ctx.fillStyle = 'rgba(121,160,255,' + (alpha * 0.55) + ')';
-        ctx.fillRect(x + u, y + 3 * u, 5 * u, u);
+      function hash(n) { const x = Math.sin(n * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); }
+      function sprite(ctx, rows, x, y, px, color) {
+        ctx.fillStyle = color;
+        rows.forEach((row, ry) => {
+          for (let cx = 0; cx < row.length; cx++)
+            if (row[cx] === 'X') ctx.fillRect(Math.round(x + cx * px), Math.round(y + ry * px), px, px);
+        });
       }
-      // 01 Курс: медленный дрейф облаков разного масштаба
+      function pine(ctx, x, baseY, h, w, color) {
+        ctx.fillStyle = color;
+        const steps = 5;
+        for (let i = 0; i < steps; i++) {
+          const yy = baseY - h + Math.round((h / steps) * i);
+          const ww = Math.max(2, Math.round(w * (0.3 + 0.7 * (i / steps))));
+          ctx.fillRect(Math.round(x - ww / 2), yy, ww, Math.ceil(h / steps) + 1);
+        }
+      }
+      function bolt(ctx, seed, W, flash) {
+        const x0 = 60 + seed * (W - 120);
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = 'rgba(245,248,255,' + (0.9 * flash) + ')';
+        ctx.beginPath();
+        let y = -6, bx = x0;
+        ctx.moveTo(bx, y);
+        while (y < 96) {
+          bx += (hash(y * 3.7 + seed * 91) - 0.5) * 30;
+          y += 10 + hash(y * 1.3 + seed * 17) * 9;
+          ctx.lineTo(bx, y);
+        }
+        ctx.stroke();
+        ctx.lineWidth = 5;
+        ctx.strokeStyle = 'rgba(180,205,255,' + (0.3 * flash) + ')';
+        ctx.stroke();
+      }
+
+      // 01 Курс: невысокий пиксельный лес, дождь и редкие молнии
       setup('artCourse', (ctx, W, H, t) => {
-        const wrap = (x, sp) => ((((x - t * sp) % (W + 140)) + (W + 140)) % (W + 140)) - 70;
-        cloud(ctx, wrap(30, 12), 42, 5, 0.5);
-        cloud(ctx, wrap(260, 19), 96, 4, 0.35);
-        cloud(ctx, wrap(470, 8), 122, 6, 0.6);
+        const sky = ctx.createLinearGradient(0, 0, 0, H);
+        sky.addColorStop(0, '#070a14');
+        sky.addColorStop(1, '#0b1120');
+        ctx.fillStyle = sky;
+        ctx.fillRect(0, 0, W, H);
+
+        // вспышка: цикл 9с, молния в последней доле цикла
+        const cyc = Math.floor(t / 9);
+        const ph = (t % 9) / 9;
+        let flash = 0;
+        if (ph > 0.88) {
+          const u = (ph - 0.88) / 0.12;
+          flash = Math.max(0, Math.sin(u * Math.PI) * (0.6 + 0.4 * Math.sin(u * 34)));
+        }
+        if (flash > 0.25) bolt(ctx, hash(cyc * 7.3), W, flash);
+
+        // тусклые звёзды в просветах неба
+        for (let i = 0; i < 14; i++) {
+          const a = 0.1 + 0.16 * Math.abs(Math.sin(t * 0.9 + i * 2.1));
+          ctx.fillStyle = 'rgba(200,214,255,' + a + ')';
+          ctx.fillRect(hash(i * 3.1) * W, hash(i * 5.7) * 44, 2, 2);
+        }
+
+        // лес: дальняя и ближняя древесные полосы
+        for (let i = 0; i < 17; i++) {
+          pine(ctx, i * 40 + hash(i * 1.7) * 14, H, 38 + hash(i * 2.9) * 30, 16, '#16223a');
+        }
+        for (let i = 0; i < 12; i++) {
+          pine(ctx, i * 56 + hash(i * 4.3) * 20, H, 62 + hash(i * 6.1) * 46, 20, '#0a1220');
+        }
+        // земля
+        ctx.fillStyle = '#070b14';
+        ctx.fillRect(0, H - 4, W, 4);
+
+        // дождь — две глубины, дальняя светлее и медленнее
+        for (let layer = 0; layer < 2; layer++) {
+          const n = layer ? 60 : 45;
+          ctx.fillStyle = layer ? 'rgba(150,180,255,0.4)' : 'rgba(150,180,255,0.16)';
+          for (let i = 0; i < n; i++) {
+            const k = i + layer * 100;
+            const sp = layer ? 300 : 170;
+            const x = (hash(k * 3.3) * (W + 40) + t * 22) % (W + 40) - 20;
+            const y = (hash(k * 7.9) * H + t * sp) % (H + 16) - 8;
+            ctx.fillRect(x, y, layer ? 2 : 1, layer ? 11 : 7);
+          }
+        }
+
+        // заливка вспышкой поверх всей сцены
+        if (flash > 0.01) {
+          ctx.fillStyle = 'rgba(205,218,255,' + (flash * 0.22) + ')';
+          ctx.fillRect(0, 0, W, H);
+        }
       });
-      // 02 Витрина: пришелец, мерцающие звёзды и редкие выстрелы
+
+      // 02 Витрина: звёздный небосвод, марширующая флотилия и корабль игрока
       const INV = [
         '..X.....X..',
         '...X...X...',
@@ -194,28 +272,72 @@
         'X.X.....X.X',
         '...XX.XX...'
       ];
+      const SHIP = [
+        '.....X.....',
+        '....XXX....',
+        '....XXX....',
+        '.XXXXXXXXX.',
+        'XXXXXXXXXXX'
+      ];
       setup('artArcade', (ctx, W, H, t) => {
-        for (let i = 0; i < 8; i++) {
-          const sx = (i * 37 + 13) % W, sy = (i * 53 + 7) % (H - 60);
-          const a = 0.22 + 0.35 * Math.abs(Math.sin(t * 1.5 + i * 1.31));
-          ctx.fillStyle = i % 3 ? 'rgba(235,238,255,' + a + ')' : 'rgba(121,160,255,' + a + ')';
-          ctx.fillRect(sx, sy, 4, 4);
-        }
-        const px = 5, bw = INV[0].length * px;
-        const bx = (W - bw) / 2 + Math.sin(t * 0.8) * 20;
-        const by = 62 + Math.sin(t * 2.1) * 5;
-        ctx.fillStyle = 'rgba(155,227,107,0.8)';
-        INV.forEach((row, ry) => {
-          for (let cx = 0; cx < row.length; cx++)
-            if (row[cx] === 'X') ctx.fillRect(bx + cx * px, by + ry * px, px, px);
-        });
-        [120, 320, 520].forEach((sx, i) => {
-          const ph = (t * 0.85 + i * 0.83) % 2.6;
-          if (ph < 1) {
-            ctx.fillStyle = 'rgba(255,107,107,0.75)';
-            ctx.fillRect(sx, H - 14 - ph * (H - 70), 4, 14);
+        // три слоя звёзд с параллаксом
+        for (let layer = 0; layer < 3; layer++) {
+          for (let i = 0; i < 22; i++) {
+            const k = i + layer * 61;
+            const x = ((hash(k * 3.7) * W - t * (3 + layer * 4)) % W + W) % W;
+            const y = hash(k * 9.1) * (H - 46);
+            const tw = 0.3 + 0.7 * Math.abs(Math.sin(t * (0.8 + hash(k)) + k));
+            ctx.fillStyle = 'rgba(235,238,255,' + ((0.12 + layer * 0.14) * tw) + ')';
+            ctx.fillRect(x, y, layer === 2 ? 2 : 1, layer === 2 ? 2 : 1);
           }
-        });
+        }
+
+        // флотилия: 2 ряда по 6, марш вправо-влево со снижением
+        const cyc = Math.floor(t / 14);
+        const ph = t % 14;
+        const dir = cyc % 2 ? -1 : 1;
+        const off = dir * (Math.min(ph, 10) * 13 - (dir < 0 ? 130 : 0));
+        const drop = (cyc % 3) * 9;
+        const fx = 116 + off;
+        for (let r = 0; r < 2; r++) {
+          for (let c = 0; c < 6; c++) {
+            const bob = Math.sin(t * 3 + c) * 1.5;
+            sprite(ctx, INV, fx + c * 62, 16 + r * 32 + drop + bob, 3,
+              r ? 'rgba(155,227,107,0.75)' : 'rgba(120,200,255,0.7)');
+          }
+        }
+
+        // корабль игрока ползает вдоль низа и стреляет
+        const sx = W / 2 - 27 + Math.sin(t * 0.55) * (W / 2 - 100);
+        const sy = H - 32;
+        sprite(ctx, SHIP, sx, sy, 5, 'rgba(121,160,255,0.9)');
+        for (let i = 0; i < 2; i++) {
+          const phs = (t * 0.5 + i * 0.5) % 1;
+          if (phs < 0.8) {
+            const shotY = sy - 6 - phs * (sy - 70);
+            ctx.fillStyle = 'rgba(235,238,255,0.85)';
+            ctx.fillRect(sx + 25, shotY, 3, 10);
+          }
+        }
+        // ответные выстрелы пришельцев
+        for (let i = 0; i < 3; i++) {
+          const col = Math.floor(hash(i * 13.7 + cyc) * 6);
+          const phs = (t * 0.4 + i * 0.37) % 1;
+          const bx = fx + col * 62 + 15;
+          const by = 16 + 32 + drop + 24 + phs * (sy - 88);
+          if (phs > 0.15) {
+            ctx.fillStyle = 'rgba(255,107,107,0.8)';
+            ctx.fillRect(bx, by, 4, 9);
+          }
+        }
+
+        // грунт
+        ctx.fillStyle = '#10131d';
+        ctx.fillRect(0, H - 5, W, 5);
+        for (let i = 0; i < 26; i++) {
+          ctx.fillStyle = 'rgba(121,160,255,' + (0.1 + 0.14 * hash(i * 2.2)) + ')';
+          ctx.fillRect(hash(i * 5.1) * W, H - 5, 2, 2);
+        }
       });
     })();
 
