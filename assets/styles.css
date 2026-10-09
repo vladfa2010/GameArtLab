@@ -755,22 +755,47 @@
     .lesson-content .exercise p { color: #cfcfd4; font-size: 14px; line-height: 1.6; margin: 0; }
     .lesson-content .facts {
       margin-top: 24px;
-      padding: 18px 20px;
-      background: rgba(255, 255, 255, 0.03);
-      border-left: 3px solid rgba(255, 255, 255, 0.25);
-      border-radius: 8px;
+      padding: 20px 22px;
+      background: linear-gradient(180deg, rgba(121,160,255,0.06), rgba(255,255,255,0.015));
+      border: 1px solid rgba(121,160,255,0.18);
+      border-radius: 12px;
     }
     .lesson-content .facts h5 {
-      margin: 0 0 10px 0;
+      margin: 0 0 12px 0;
       font-size: 11px;
-      color: #939393;
+      color: #79A0FF;
       text-transform: uppercase;
-      letter-spacing: 0.1em;
+      letter-spacing: 0.14em;
       font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 9px;
     }
-    .lesson-content .facts ul { margin: 0; padding-left: 18px; }
-    .lesson-content .facts li { color: #cfcfd4; font-size: 14px; line-height: 1.65; margin-bottom: 8px; }
+    .lesson-content .facts h5::before {
+      content: '';
+      width: 6px; height: 6px;
+      background: #79A0FF;
+      transform: rotate(45deg);
+      flex: none;
+    }
+    .lesson-content .facts ul { margin: 0; padding: 0; list-style: none; }
+    .lesson-content .facts li {
+      color: #cfcfd4;
+      font-size: 14px;
+      line-height: 1.65;
+      margin-bottom: 10px;
+      padding-left: 16px;
+      position: relative;
+    }
     .lesson-content .facts li:last-child { margin-bottom: 0; }
+    .lesson-content .facts li::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0.62em;
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: rgba(121,160,255,0.55);
+    }
     .lesson-content .lesson-actions {
       display: flex; justify-content: space-between;
       align-items: center; flex-wrap: wrap; gap: 12px;
