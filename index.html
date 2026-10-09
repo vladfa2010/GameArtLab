@@ -80,6 +80,19 @@
         <p>У каждого урока — проверенные факты: коллекция Уитни, MoMA, биеннале, «Грэмми» саундтрека, цензура в App Store. Искусство — это ещё и институции.</p>
       </div>
     </div>
+
+    <section class="ga-subscribe">
+      <div class="ga-sub-text">
+        <div class="ga-sub-kicker">CIFRA CLUB</div>
+        <h3>Будьте в курсе — и месяц в подарок</h3>
+        <p>Оставьте почту: новые уроки, работы и материалы CIFRA — первыми. А за подписку подарим месяц комплиментарной подписки CIFRA CLUB.</p>
+      </div>
+      <form class="ga-sub-form" id="subForm" novalidate>
+        <input type="email" id="subEmail" placeholder="you@example.com" autocomplete="email" inputmode="email" required />
+        <button type="submit" class="btn btn-primary">Получить месяц бесплатно</button>
+        <p class="ga-sub-note">Никакого спама. Отписаться можно в один клик.</p>
+      </form>
+    </section>
   </main>
 
   <footer>
@@ -161,6 +174,40 @@
           String(i + 1).padStart(2, '0') + '</div>' +
           '<div class="lg-meta"><span class="lg-algo">' + w[0] + '</span><span class="lg-seed">' + w[1] + ' · ' + w[2] + '</span></div>';
         track.appendChild(a);
+      });
+    })();
+  </script>
+
+  <script>
+    // Подписка CIFRA CLUB: валидация, сохранение локально, состояние «готово»
+    (function () {
+      const form = document.getElementById('subForm');
+      if (!form) return;
+      const KEY = 'ga-subscribers';
+      const input = document.getElementById('subEmail');
+      const done = (email) => {
+        form.innerHTML = '<p class="ga-sub-ok">Готово! На <b>' + email.replace(/</g, '&lt;') +
+          '</b> придёт письмо — месяц CIFRA CLUB уже ваш.</p>';
+      };
+      try {
+        const saved = JSON.parse(localStorage.getItem(KEY) || '[]');
+        if (saved.length) input.value = saved[saved.length - 1];
+      } catch (e) { /* приватный режим */ }
+      input.addEventListener('input', () => input.classList.remove('ga-sub-err'));
+      form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const email = (input.value || '').trim();
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) {
+          input.classList.add('ga-sub-err');
+          input.focus();
+          return;
+        }
+        try {
+          const list = JSON.parse(localStorage.getItem(KEY) || '[]');
+          list.push(email);
+          localStorage.setItem(KEY, JSON.stringify(list));
+        } catch (err) { /* приватный режим */ }
+        done(email);
       });
     })();
   </script>

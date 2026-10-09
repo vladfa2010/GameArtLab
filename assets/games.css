@@ -169,6 +169,39 @@
 .ga-manifesto p { color: #cfcfd4; font-size: 16px; line-height: 1.75; margin: 0; }
 .ga-manifesto em { color: #fbfbfb; }
 
+/* подписка CIFRA CLUB */
+.ga-subscribe {
+  display: grid; grid-template-columns: 1.15fr 1fr; gap: 36px; align-items: center;
+  margin: 0 0 96px; padding: 34px 36px;
+  border: 1px solid rgba(121,160,255,0.18); border-radius: 12px;
+  background: linear-gradient(180deg, rgba(121,160,255,0.06), rgba(255,255,255,0.015));
+}
+.ga-sub-kicker {
+  font-family: "JetBrains Mono", monospace; font-size: 12px; color: #79A0FF;
+  letter-spacing: 0.14em; text-transform: uppercase; margin-bottom: 14px;
+}
+.ga-sub-text h3 {
+  font-family: Montserrat, sans-serif; font-weight: 900; text-transform: uppercase;
+  font-size: 25px; line-height: 1.15; letter-spacing: -0.01em; margin: 0 0 12px;
+}
+.ga-sub-text p { color: #cfcfd4; font-size: 15px; line-height: 1.65; margin: 0; }
+.ga-sub-form { display: flex; flex-direction: column; gap: 12px; }
+.ga-sub-form input {
+  padding: 14px 16px; border-radius: 10px; outline: none;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.03); color: #fbfbfb;
+  font-size: 15px; font-family: inherit;
+}
+.ga-sub-form input::placeholder { color: #6b6b70; }
+.ga-sub-form input:focus { border-color: rgba(121,160,255,0.55); }
+.ga-sub-form input.ga-sub-err { border-color: rgba(255,107,107,0.7); }
+.ga-sub-note { color: #939393; font-size: 12.5px; margin: 0; }
+.ga-sub-ok { color: #cfe0ff; font-size: 15.5px; line-height: 1.6; margin: 0; }
+.ga-sub-ok b { color: #fbfbfb; }
+@media (max-width: 860px) {
+  .ga-subscribe { grid-template-columns: 1fr; gap: 22px; padding: 26px 22px; }
+}
+
 @media (max-width: 720px) {
   .arc-modal-box { padding: 12px; }
 }
