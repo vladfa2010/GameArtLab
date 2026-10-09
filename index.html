@@ -102,6 +102,8 @@
     </div>
   </footer>
 
+  <script src="assets/games-data.js"></script>
+  <script src="assets/games.js"></script>
   <script>
     // Фон героя: пиксельные облака, дрейф и глитч-помехи (после Arcangel & JODI)
     (function () {
@@ -149,31 +151,46 @@
       requestAnimationFrame(frame);
     })();
 
-    // Лента работ: карточки-ссылки на витрину
+    // Лента работ: карточки-ссылки на витрину + живые миниатюры из движка
     (function () {
       const track = document.getElementById('lgTrack');
       document.getElementById('lgPrev').addEventListener('click', () => track.scrollBy({ left: -480, behavior: 'smooth' }));
       document.getElementById('lgNext').addEventListener('click', () => track.scrollBy({ left: 480, behavior: 'smooth' }));
-      const WORKS = [
-        ['Super Mario Clouds', 'Cory Arcangel', '2002'],
-        ['SOD', 'JODI', '1999'],
-        ['Passage', 'Jason Rohrer', '2007'],
-        ['The Graveyard', 'Tale of Tales', '2008'],
-        ['McDonald\'s Videogame', 'Molleindustria', '2006'],
-        ['The Artist Is Present', 'Pippin Barr', '2011'],
-        ['Proteus', 'Ed Key & David Kanaga', '2013'],
-        ['Everything', 'David OReilly', '2017'],
-        ['DEVICE 6', 'Simogo', '2013'],
-        ['Yume Nikki', 'Kikiyama', '2004'],
-      ];
-      WORKS.forEach((w, i) => {
+      GAME_COURSE.forEach((L, i) => {
         const a = document.createElement('a');
         a.className = 'lg-card';
         a.href = 'arcade.html';
         a.innerHTML = '<div class="lg-skeleton" style="display:flex;align-items:center;justify-content:center;color:#3a3a44;font:700 40px Inter,sans-serif;">' +
           String(i + 1).padStart(2, '0') + '</div>' +
-          '<div class="lg-meta"><span class="lg-algo">' + w[0] + '</span><span class="lg-seed">' + w[1] + ' · ' + w[2] + '</span></div>';
+          '<img class="lg-thumb" alt="' + L.work + '" style="display:none;" />' +
+          '<div class="lg-meta"><span class="lg-algo">' + L.work + '</span><span class="lg-seed">' + L.artist + ' · ' + L.year + '</span></div>';
         track.appendChild(a);
+      });
+      // миниатюры: прогоняем каждую игру в фоне, ждём прорисовки кадров
+      function captureThumb(L, img, skeleton, delay) {
+        setTimeout(() => {
+          const host = document.createElement('div');
+          host.style.cssText = 'position:fixed;left:-9999px;top:0;width:640px;';
+          document.body.appendChild(host);
+          const api = GameArt.mountGame(host, L.game, {});
+          let frames = 0;
+          (function pump() {
+            if (++frames >= 45) {
+              try {
+                img.src = api.canvas.toDataURL('image/png');
+                img.style.display = 'block';
+                skeleton.style.display = 'none';
+              } catch (e) { }
+              api.destroy(); host.remove();
+              return;
+            }
+            requestAnimationFrame(pump);
+          })();
+        }, delay);
+      }
+      document.querySelectorAll('.lg-thumb').forEach((img, i) => {
+        const L = GAME_COURSE[i];
+        captureThumb(L, img, img.previousElementSibling, 100 + i * 150);
       });
     })();
   </script>
