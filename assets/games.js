@@ -834,7 +834,7 @@ const GameArt = (() => {
       add('tree', 26, 0); add('flower', 40, 2); add('rock', 20, 4); add('bug', 8, 3); add('bird', 5, 1);
       const stones = [];
       for (let i = 0; i < 5; i++) { const a = i / 5 * 6.283; stones.push({ x: Math.cos(a) * 70, y: Math.sin(a) * 70, h: 30 + api.rand() * 14 }); }
-      return { px: 0, py: 0, ents, stones, circleX: (api.rand() - 0.5) * 1200, circleY: (api.rand() - 0.5) * 1200, inCircle: 0, season: 0, notes: [], heard: new Set() };
+      return { px: 0, py: 0, ents, stones, circleX: (api.rand() - 0.5) * 1200, circleY: (api.rand() - 0.5) * 1200, inCircle: 0, season: 0, notes: [], heard: new Set(), trail: [], stepT: 0 };
     },
     update(api, s, dt) {
       const sp = 90;
@@ -845,6 +845,12 @@ const GameArt = (() => {
       if (api.key('ArrowDown') || api.key('KeyS')) dy += 1;
       const l = Math.hypot(dx, dy) || 1;
       s.px += dx / l * sp * dt; s.py += dy / l * sp * dt;
+      // следы при ходьбе — движение заметно даже без аватара
+      if (dx || dy) {
+        s.stepT += dt;
+        if (s.stepT > 0.2) { s.stepT = 0; s.trail.push({ x: s.px, y: s.py, a: 0.5 }); }
+      }
+      s.trail.forEach(f => f.a -= dt * 0.45); s.trail = s.trail.filter(f => f.a > 0);
       // тор-мир
       s.px = ((s.px + 1000) % 2000 + 2000) % 2000 - 1000;
       s.py = ((s.py + 1000) % 2000 + 2000) % 2000 - 1000;
@@ -936,7 +942,16 @@ const GameArt = (() => {
         ctx.font = '16px serif'; ctx.textAlign = 'center';
         ctx.fillText('♪', sx, sy - (0.8 - n.t) * 30);
       });
-      drawHud(api, 'PROTEUS · after Ed Key & David Kanaga (2013)', 'услышано голосов: ' + s.heard.size + ' · найдите каменный круг');
+      // следы на траве — подтверждение, что вы идёте
+      s.trail.forEach(f => {
+        const sx = f.x - s.px + api.W / 2, sy = f.y - s.py + api.H / 2;
+        ctx.fillStyle = 'rgba(18,38,26,' + f.a + ')';
+        ctx.fillRect(sx - 2, sy - 1, 4, 3);
+      });
+      // ретикул первого лица (в оригинале аватара нет — вы есть взгляд)
+      ctx.fillStyle = 'rgba(255,255,255,0.4)';
+      ctx.fillRect(api.W / 2 - 1, api.H / 2 - 1, 3, 3);
+      drawHud(api, 'PROTEUS · after Ed Key & David Kanaga (2013)', 'аватара нет, как в оригинале — вы есть взгляд · голосов услышано: ' + s.heard.size);
     },
   };
 
@@ -967,7 +982,7 @@ const GameArt = (() => {
       for (let i = 0; i < 240; i++) stars.push({ x: api.rand() * 2200 - 1100, y: api.rand() * 1600 - 800, s: 1 + api.rand() * 2.4 });
       const things = [];
       for (let i = 0; i < 60; i++) things.push({ x: api.rand() * 2000 - 1000, y: api.rand() * 1400 - 700, p: api.rand() * 6.28, lvl: (api.rand() * 8) | 0 });
-      return { level: 0, x: 0, y: 0, stars, things, holdT: 0, quote: '', quoteT: 0, maxLvl: 0, anim: 0 };
+      return { level: 0, x: 0, y: 0, stars, things, holdT: 0, quote: '', quoteT: 0, maxLvl: 0, anim: 0, trail: [], st: 0, tapHintT: 0 };
     },
     update(api, s, dt) {
       let dx = 0, dy = 0;
@@ -977,6 +992,13 @@ const GameArt = (() => {
       if (api.key('ArrowDown') || api.key('KeyS')) dy += 1;
       const sp = 130 * (1 + s.level * 0.5);
       s.x += dx * sp * dt; s.y += dy * sp * dt;
+      // след за движением — на равном фоне видно, что вы двигаетесь
+      if (dx || dy) {
+        s.st += dt;
+        if (s.st > 0.07) { s.st = 0; s.trail.push({ x: s.x, y: s.y, t: 0.5 }); }
+      }
+      s.trail.forEach(p => p.t -= dt); s.trail = s.trail.filter(p => p.t > 0);
+      s.tapHintT = Math.max(0, s.tapHintT - dt);
       const holding = api.key('Space') || api.key('KeyZ') || api.pointer.down;
       if (holding) {
         s.holdT += dt;
@@ -988,6 +1010,7 @@ const GameArt = (() => {
           api.chord([262 * Math.pow(1.25, s.level), 330 * Math.pow(1.25, s.level)], 1.2, 'sine', 0.05);
         }
       } else {
+        if (s.holdT > 0 && s.holdT < 1.2 && (s.holdT < 0.35 || s.level === 0)) s.tapHintT = 1.8; // короткое нажатие — подсказка
         if (s.holdT > 0.35 && s.level > 0) {
           s.level--;
           s.quote = 'вы ныряете внутрь…'; s.quoteT = 2; s.anim = 1;
@@ -1026,10 +1049,16 @@ const GameArt = (() => {
       } else {
         ctx.fillStyle = '#7db46a'; ctx.fillRect(0, api.H - 120, api.W, 120);
       }
-      // zoom-анимация
-      const z = 1 + s.anim * 0.6;
+      // zoom-анимация + плавный набросок при удержании — реакция видна сразу
+      const z = 1 + s.anim * 0.6 + Math.min(0.16, s.holdT * 0.13);
       ctx.save();
       ctx.translate(api.W / 2, api.H / 2); ctx.scale(z, z); ctx.translate(-api.W / 2, -api.H / 2);
+      // след за движением
+      s.trail.forEach(p => {
+        const sx = p.x - s.x + api.W / 2, sy = p.y - s.y + api.H / 2;
+        ctx.fillStyle = 'rgba(255,255,255,' + p.t * 0.55 + ')';
+        ctx.beginPath(); ctx.arc(sx, sy, 2.5, 0, 6.283); ctx.fill();
+      });
       // существа
       s.things.forEach((th, i) => {
         if (th.lvl === s.level) {
@@ -1049,6 +1078,12 @@ const GameArt = (() => {
       ctx.strokeStyle = 'rgba(255,255,255,0.85)'; ctx.lineWidth = 2;
       ctx.beginPath(); ctx.arc(api.W / 2, api.H / 2 + bob, L.size + 6 + Math.sin(api.time * 3) * 2, 0, 6.283); ctx.stroke();
       ctx.restore();
+      // кольцо прогресса удержания — видно, что рост идёт
+      if (s.holdT > 0) {
+        const pr = Math.min(1, s.holdT / 1.2);
+        ctx.strokeStyle = 'rgba(255,255,255,0.9)'; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.arc(api.W / 2, api.H / 2 + Math.sin(api.time * 2.4) * 3, L.size + 24, -Math.PI / 2, -Math.PI / 2 + pr * 6.283); ctx.stroke();
+      }
       // HUD-уровень
       ctx.textAlign = 'center';
       ctx.fillStyle = deep >= 0.5 ? '#fff' : '#123';
@@ -1068,7 +1103,7 @@ const GameArt = (() => {
       }
       const holding = api.key('Space') || api.key('KeyZ') || api.pointer.down;
       ctx.fillStyle = deep >= 0.5 ? '#9ab' : '#456'; ctx.font = '13px Inter, sans-serif';
-      ctx.fillText(holding ? 'вырастайте…' : 'ЗАЖМИТЕ пробел — стать больше · отпустите — нырнуть внутрь', api.W / 2, api.H - 24);
+      ctx.fillText(s.tapHintT > 0 ? 'зажмите и ДЕРЖИТЕ — рост занимает секунду…' : (holding ? 'вырастайте… держите!' : 'ЗАЖМИТЕ пробел (A) — стать больше · отпустите — нырнуть внутрь'), api.W / 2, api.H - 24);
       drawHud(api, 'EVERYTHING · after David OReilly (2017)', 'уровень ' + (s.level + 1) + ' / ' + LEVELS.length);
     },
   };
@@ -1125,7 +1160,7 @@ const GameArt = (() => {
         line(ctx, '«Сейф открывается тому, кто помнит начало числа круга.»', api.W / 2, 240);
         door(ctx, 'ВОСТОК →', 620, 400, 200, 46, '#e8e2d4');
         s._doors = [{ id: 'doorE', x: 620, y: 400, w: 200, h: 46 }];
-        if (!s.clue1) { ctx.fillStyle = '#6a655c'; ctx.font = '13px ' + serif; line(ctx, '(кликните по надписи выше — прочитать внимательнее)', api.W / 2, 285); }
+        if (!s.clue1) { ctx.font = 'italic 13px ' + serif; linkText(ctx, '(кликните по надписи выше — прочитать внимательнее)', api.W / 2, 285); }
       } else if (s.room === 'nexus') {
         ctx.fillStyle = '#e8e2d4'; ctx.font = 'italic 22px ' + serif;
         line(ctx, 'Коридор из строк.', api.W / 2, 110);
@@ -1151,7 +1186,8 @@ const GameArt = (() => {
         ctx.fillStyle = '#8fb7e8'; ctx.font = 'italic 15px ' + serif;
         line(ctx, 'лес', 480, 200); line(ctx, 'и', 500, 230); line(ctx, 'ещё лес', 470, 262);
         ctx.fillStyle = '#c9a13b'; ctx.font = '700 20px ' + serif;
-        line(ctx, s.clue2 ? 'на обороте рамы карандашом: «вторая цифра — 1»' : '(кликните по картине)', 480, 305);
+        if (s.clue2) line(ctx, 'на обороте рамы карандашом: «вторая цифра — 1»', 480, 305);
+        else { ctx.font = 'italic 15px ' + serif; linkText(ctx, '(кликните по картине)', 480, 305); }
         ctx.fillStyle = '#9a938a'; ctx.font = '14px ' + serif;
         line(ctx, 'Подпись на раме: «вторая из трёх». Рядом чья-та пометка: «а средняя всегда одинока».', api.W / 2, 380);
         backDoor(ctx);
@@ -1162,7 +1198,8 @@ const GameArt = (() => {
         ctx.fillStyle = '#9a938a'; ctx.font = 'italic 16px ' + serif;
         line(ctx, '· · · · · · · · · · · · · · · · · · · · · · · · · · ·', api.W / 2, 160);
         ctx.fillStyle = '#e8e2d4';
-        line(ctx, s.clue1 ? 'считая точки до поворота, Анна насчитывает: первых цифр — ровно ТРИ' : '(кликните по следу — сосчитать точки)', api.W / 2, 210);
+        if (s.clue1) line(ctx, 'считая точки до поворота, Анна насчитывает: первых цифр — ровно ТРИ', api.W / 2, 210);
+        else { ctx.font = 'italic 16px ' + serif; linkText(ctx, '(кликните по следу — сосчитать точки)', api.W / 2, 210); }
         ctx.fillStyle = '#9a938a'; ctx.font = '14px ' + serif;
         line(ctx, 'Три цифры. Сейф ждёт. «Число круга» начинается с трёх…', api.W / 2, 250);
         // сейф
@@ -1196,15 +1233,26 @@ const GameArt = (() => {
         ctx.fillStyle = '#8a857c'; ctx.font = '13px ' + serif;
         line(ctx, 'подсказки разбросаны по тексту комнат', ox, 570);
       }
-      drawHud(api, 'DEVICE 6 · after Simogo (2013)', s.keypad ? 'код из трёх цифр' : 'клик по подчёркнутым словам — переходы');
+      drawHud(api, 'DEVICE 6 · after Simogo (2013)', s.keypad ? 'код из трёх цифр' : 'клик/тап по подчёркнутым словам — переходы');
     },
   };
   function line(ctx, txt, x, y) { ctx.fillText(txt, x, y); }
+  function linkText(ctx, txt, x, y) {
+    ctx.fillStyle = '#8fb7e8';
+    ctx.fillText(txt, x, y);
+    const w = ctx.measureText(txt).width;
+    ctx.strokeStyle = '#8fb7e8'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(x - w / 2, y + 4); ctx.lineTo(x + w / 2, y + 4); ctx.stroke();
+  }
   function door(ctx, label, x, y, w, h, color) {
     ctx.fillStyle = 'rgba(255,255,255,0.06)'; ctx.fillRect(x, y, w, h);
     ctx.strokeStyle = color; ctx.lineWidth = 1.5; ctx.strokeRect(x, y, w, h);
     ctx.fillStyle = color; ctx.font = '700 15px Inter, sans-serif'; ctx.textAlign = 'center';
     ctx.fillText(label, x + w / 2, y + h / 2 + 5);
+    // подчёркивание — слово выглядит ссылкой, как в DEVICE 6
+    const tw = ctx.measureText(label).width;
+    ctx.strokeStyle = color; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(x + w / 2 - tw / 2, y + h / 2 + 10); ctx.lineTo(x + w / 2 + tw / 2, y + h / 2 + 10); ctx.stroke();
     ctx.textAlign = 'center';
   }
   function backDoor(ctx) { door(ctx, '← назад', 30, 30, 150, 40, '#8a857c'); }
