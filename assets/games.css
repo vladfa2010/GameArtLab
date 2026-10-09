@@ -3,8 +3,19 @@
    ============================================================ */
 
 /* --- игровой модуль в уроке --- */
-.ga-holder { grid-column: 1 / -1; user-select: none; -webkit-user-select: none; }
-.ga-shell { position: relative; width: 100%; }
+.ga-holder {
+  grid-column: 1 / -1;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+.ga-shell {
+  position: relative;
+  width: 100%;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
 .ga-canvas {
   display: block;
   width: 100%;
@@ -14,6 +25,10 @@
   outline: none;
   touch-action: none;
   image-rendering: pixelated;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 .ga-hint {
   margin-top: 14px;
