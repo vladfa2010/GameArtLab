@@ -1018,7 +1018,7 @@
     .hero-cta { display: flex; gap: 14px; margin-top: 40px; flex-wrap: wrap; }
     .btn-xl { padding: 18px 36px; font-size: 15px; text-decoration: none; display: inline-block; }
 
-    .path-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin: 88px 0 0; }
+    .path-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin: 88px 0 32px; }
     .path-card {
       background: #191919;
       border: 1px solid rgba(255, 255, 255, 0.06);
