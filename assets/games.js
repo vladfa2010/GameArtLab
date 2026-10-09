@@ -975,6 +975,40 @@ const GameArt = (() => {
     '«Малое во внутреннем содержит большое, большое во внешнем содержит малое.» — Чжуан-цзы, через Уоттса',
     '«Ты не отдель от всего остального. Ты — остальное.»',
   ];
+  // пиксельные спрайты существ: 0 микроб, 1 жук, 2 олень, 3 человек
+  // ('X' — основной цвет уровня, 'O' — светлый акцент); космические уровни — без спрайта
+  const BEINGS = [
+    ['..XXXX..', '.XXXXXX.', 'XXOXXOXX', 'XXXXXXXX', '.XXXXXX.', '.X.XX.X.', 'X......X'],
+    ['.X......X.', '..X....X..', '..XXXXXX..', '.XOOOOOOX.', 'XOOOOOOOOX', 'XOOOXXOOOX',
+     '.XOOOOOOX.', '.XXXXXXXX.', 'X..X..X..X', 'X..X..X..X'],
+    ['..X.....X...', '.XXX...XXX..', '..XX...XX...', '...XXXXX....', '....XXXX....', '.....XX.....',
+     '.....XXX....', '.XXXXXXXXX..', 'XXXXXXXXXXX.', '..XXX.XXX...', '...X...X....', '...X...X....',
+     '..XX...XX...'],
+    ['...XX...', '..XXXX..', '..XOOX..', '..XXXX..', '.XXXXXX.', '.X.XX.X.', '.X.XX.X.', '..XXXX..',
+     '...XX...', '..X..X..', '..X..X..', '.XX..XX.'],
+  ];
+  function drawBeing(ctx, cx, cy, r, lvl) {
+    const rows = BEINGS[lvl];
+    if (!rows) {
+      ctx.fillStyle = LEVELS[lvl].color;
+      ctx.beginPath(); ctx.arc(cx, cy, r, 0, 6.283); ctx.fill();
+      ctx.fillStyle = 'rgba(0,0,0,0.5)';
+      ctx.beginPath(); ctx.arc(cx + r * 0.3, cy - r * 0.2, Math.max(1.5, r * 0.14), 0, 6.283); ctx.fill();
+      return;
+    }
+    const px = Math.max(1, (r * 2.2) / rows[0].length);
+    const w = rows[0].length * px, h = rows.length * px;
+    const ox = cx - w / 2, oy = cy - h / 2;
+    for (let y = 0; y < rows.length; y++) {
+      const row = rows[y];
+      for (let x = 0; x < row.length; x++) {
+        const ch = row[x];
+        if (ch === '.') continue;
+        ctx.fillStyle = ch === 'O' ? 'rgba(255,255,255,0.55)' : LEVELS[lvl].color;
+        ctx.fillRect(ox + x * px, oy + y * px, Math.ceil(px), Math.ceil(px));
+      }
+    }
+  }
   GAMES.everything = {
     touch: ['left', 'right', 'up', 'down', 'a'],
     init(api) {
@@ -1065,16 +1099,12 @@ const GameArt = (() => {
           let sx = th.x - s.x + api.W / 2, sy = th.y - s.y + api.H / 2;
           sx = ((sx % 2000) + 2400) % 2000 - 600; sy = ((sy % 1400) + 2000) % 1400 - 700;
           const r = L.size * (0.5 + (i % 5) * 0.16);
-          ctx.fillStyle = LEVELS[th.lvl].color;
-          ctx.beginPath(); ctx.arc(sx, sy, r, 0, 6.283); ctx.fill();
-          ctx.fillStyle = 'rgba(0,0,0,0.5)';
-          ctx.beginPath(); ctx.arc(sx + r * 0.3, sy - r * 0.2, Math.max(1.5, r * 0.14), 0, 6.283); ctx.fill();
+          drawBeing(ctx, sx, sy, r, th.lvl);
         }
       });
       // вы
       const bob = Math.sin(api.time * 2.4) * 3;
-      ctx.fillStyle = L.color;
-      ctx.beginPath(); ctx.arc(api.W / 2, api.H / 2 + bob, L.size, 0, 6.283); ctx.fill();
+      drawBeing(ctx, api.W / 2, api.H / 2 + bob, L.size, s.level);
       ctx.strokeStyle = 'rgba(255,255,255,0.85)'; ctx.lineWidth = 2;
       ctx.beginPath(); ctx.arc(api.W / 2, api.H / 2 + bob, L.size + 6 + Math.sin(api.time * 3) * 2, 0, 6.283); ctx.stroke();
       ctx.restore();
