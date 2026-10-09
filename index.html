@@ -218,15 +218,15 @@
 
       // 01 Курс: невысокий пиксельный лес, дождь и редкие молнии; небо прозрачное, как на второй карточке
       setup('artCourse', (ctx, W, H, t) => {
-        // вспышка: цикл 9с, молния в последней доле цикла
+        // вспышка: цикл 9с, молния в последней доле цикла; без заливки экрана — только стрела
         const cyc = Math.floor(t / 9);
         const ph = (t % 9) / 9;
         let flash = 0;
         if (ph > 0.88) {
           const u = (ph - 0.88) / 0.12;
-          flash = Math.max(0, Math.sin(u * Math.PI) * (0.6 + 0.4 * Math.sin(u * 34)));
+          flash = Math.max(0, Math.sin(u * Math.PI) * (0.78 + 0.22 * Math.sin(u * 30)));
         }
-        if (flash > 0.25) bolt(ctx, hash(cyc * 7.3), W, flash);
+        if (flash > 0.2) bolt(ctx, hash(cyc * 7.3), W, flash);
 
         // тусклые звёзды в просветах неба
         for (let i = 0; i < 14; i++) {
@@ -257,12 +257,6 @@
             const y = (hash(k * 7.9) * H + t * sp) % (H + 16) - 8;
             ctx.fillRect(x, y, layer ? 2 : 1, layer ? 11 : 7);
           }
-        }
-
-        // заливка вспышкой поверх всей сцены
-        if (flash > 0.01) {
-          ctx.fillStyle = 'rgba(205,218,255,' + (flash * 0.22) + ')';
-          ctx.fillRect(0, 0, W, H);
         }
       });
 
