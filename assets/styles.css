@@ -739,17 +739,17 @@
     }
     .lesson-content .exercise {
       margin-top: 24px;
-      padding: 18px 20px;
-      background: rgba(121, 160, 255, 0.06);
-      border-left: 3px solid #79A0FF;
-      border-radius: 8px;
+      padding: 20px 22px;
+      background: linear-gradient(180deg, rgba(121,160,255,0.06), rgba(255,255,255,0.015));
+      border: 1px solid rgba(121,160,255,0.18);
+      border-radius: 12px;
     }
     .lesson-content .exercise h5 {
-      margin: 0 0 8px 0;
+      margin: 0 0 12px 0;
       font-size: 11px;
       color: #79A0FF;
       text-transform: uppercase;
-      letter-spacing: 0.1em;
+      letter-spacing: 0.14em;
       font-weight: 700;
     }
     .lesson-content .exercise p { color: #cfcfd4; font-size: 14px; line-height: 1.6; margin: 0; }
@@ -767,16 +767,6 @@
       text-transform: uppercase;
       letter-spacing: 0.14em;
       font-weight: 700;
-      display: flex;
-      align-items: center;
-      gap: 9px;
-    }
-    .lesson-content .facts h5::before {
-      content: '';
-      width: 6px; height: 6px;
-      background: #79A0FF;
-      transform: rotate(45deg);
-      flex: none;
     }
     .lesson-content .facts ul { margin: 0; padding: 0; list-style: none; }
     .lesson-content .facts li {
