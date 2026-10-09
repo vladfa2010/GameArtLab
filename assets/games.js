@@ -91,8 +91,8 @@ const GameArt = (() => {
       game.touch.forEach((btn) => {
         const b = document.createElement('button');
         b.className = 'ga-tbtn ga-tbtn-' + btn;
-        b.textContent = { left: '◀', right: '▶', up: '▲', down: '▼', a: 'A', b: 'B', c: 'C' }[btn] || btn;
-        const code = { left: 'ArrowLeft', right: 'ArrowRight', up: 'ArrowUp', down: 'ArrowDown', a: 'KeyZ', b: 'KeyX', c: 'KeyC' }[btn];
+        b.textContent = { left: '◀', right: '▶', up: '▲', down: '▼', a: 'A', b: 'B', c: 'C', r: 'R' }[btn] || btn;
+        const code = { left: 'ArrowLeft', right: 'ArrowRight', up: 'ArrowUp', down: 'ArrowDown', a: 'KeyZ', b: 'KeyX', c: 'KeyC', r: 'KeyR' }[btn];
         const dn = (e) => { e.preventDefault(); if (!held[code]) pressedSet.add(code); held[code] = true; ac(); };
         const up = (e) => { e.preventDefault(); held[code] = false; };
         b.addEventListener('pointerdown', dn);
@@ -262,7 +262,7 @@ const GameArt = (() => {
 
   /* ---------- 02. SOD (после JODI) ---------- */
   GAMES.sod = {
-    touch: ['left', 'right'],
+    touch: ['left', 'right', 'r'],
     init(api) {
       return { rot: 0, noise: 0, flashes: [], shot: 0, dist: 0 };
     },
@@ -327,7 +327,7 @@ const GameArt = (() => {
 
   /* ---------- 03. Passage (после Jason Rohrer) ---------- */
   GAMES.passage = {
-    touch: ['left', 'right'],
+    touch: ['left', 'right', 'r'],
     init(api) {
       const rand = api.rand;
       const chests = [];
