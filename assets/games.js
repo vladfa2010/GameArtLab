@@ -428,99 +428,117 @@ const GameArt = (() => {
     touch: ['left', 'right', 'up', 'down'],
     init(api) {
       const stones = [];
-      for (let i = 0; i < 14; i++) stones.push({ x: 120 + i * 68 + api.rand() * 30, w: 18 + api.rand() * 10, h: 26 + api.rand() * 18, cross: api.rand() > 0.5 });
+      for (let i = 0; i < 16; i++) stones.push({ x: 420 + i * 150 + api.rand() * 60, w: 26 + api.rand() * 14, h: 40 + api.rand() * 26, cross: api.rand() > 0.5 });
       const drops = [];
       for (let i = 0; i < 130; i++) drops.push({ x: api.rand() * 1400, y: api.rand() * api.H, v: 300 + api.rand() * 200 });
-      return { px: 30, sitting: false, sitT: 0, left: false, bird: 0, stones, drops, crowX: 900, sang: false };
+      return { px: 170, sitting: false, sitT: 0, sitAnim: 0, leaving: false, bird: 0, stones, drops, crowX: 900, sang: false };
     },
     update(api, s, dt) {
-      if (!s.left) {
+      const BENCH = 900; // мировая координата центра скамейки
+      if (!s.leaving) {
         if (!s.sitting) {
-          if (api.key('ArrowRight') || api.key('KeyD')) { s.px += 26 * dt; api.tone(0, 0); }
-          if (s.px > 520) s.px = 520;
-          if ((api.wasPressed('ArrowDown') || api.wasPressed('KeyS')) && s.px > 430) {
-            s.sitting = true; api.chord([196, 247, 294], 3.2, 'sine', 0.045); s.sang = true;
+          if (api.key('ArrowRight') || api.key('KeyD')) s.px += 60 * dt;
+          if (api.key('ArrowLeft') || api.key('KeyA')) s.px -= 60 * dt;
+          s.px = Math.max(170, Math.min(940, s.px));
+          const nearBench = Math.abs(s.px - BENCH) < 60;
+          if ((api.wasPressed('ArrowDown') || api.wasPressed('KeyS')) && nearBench) {
+            s.sitting = true; s.sitAnim = 0; s.sang = true;
+            api.chord([196, 247, 294], 3.2, 'sine', 0.045);
           }
         } else {
-          s.sitT += dt;
-          s.bird = Math.min(1, s.bird + dt * 0.25);
-          if (s.sitT > 18) s.bird = 1;
-          if (api.wasPressed('ArrowUp') || api.wasPressed('KeyW')) { s.sitting = false; s.leaving = true; }
+          if (s.sitAnim < 1) s.sitAnim = Math.min(1, s.sitAnim + dt * 2.2);
+          else {
+            s.sitT += dt;
+            s.bird = Math.min(1, s.bird + dt * 0.25);
+            if (s.sitT > 18) s.bird = 1;
+            if (api.wasPressed('ArrowUp') || api.wasPressed('KeyW')) { s.sitting = false; s.leaving = true; }
+          }
         }
       }
       if (s.leaving) {
-        s.px -= 30 * dt;
-        if (s.px < -30) api.end('ВЫ УШЛИ\nона могла бы остаться ещё немного\n(в оригинале — уйти могли только те, кто заплатил)');
+        s.px -= 70 * dt;
+        if (s.px < 120) api.end('ВЫ УШЛИ\nона могла бы остаться ещё немного\n(в оригинале — уйти могли только те, кто заплатил)');
       }
       s.drops.forEach(d => { d.y += d.v * dt; if (d.y > api.H) { d.y = -10; d.x = api.rand() * 1400; } });
       s.crowX -= dt * 40; if (s.crowX < -60) s.crowX = 1000;
-      api.setScore(s.sitting ? Math.floor(s.sitT) : 0);
+      api.setScore(s.sitting && s.sitAnim >= 1 ? Math.floor(s.sitT) : 0);
     },
     draw(api, s) {
       const { ctx } = api;
+      const BENCH = 900;
+      const GX = 170;                  // её экранная позиция при ходьбе
+      const cam = s.px - GX;           // камера привязана к ней
+      const seatX = BENCH - cam;       // экранный центр скамейки
       // сепия/монохром
       const sky = ctx.createLinearGradient(0, 0, 0, api.H);
       sky.addColorStop(0, '#8f8f8f'); sky.addColorStop(0.6, '#6d6d6d'); sky.addColorStop(1, '#3a3a3a');
       ctx.fillStyle = sky; ctx.fillRect(0, 0, api.W, api.H);
       ctx.fillStyle = '#2c2c2c'; ctx.fillRect(0, api.H - 90, api.W, 90);
-      // ограда
-      ctx.fillStyle = '#1c1c1c';
-      for (let x = 0; x < api.W; x += 26) ctx.fillRect(x, api.H - 150, 4, 60);
-      ctx.fillRect(0, api.H - 136, api.W, 4);
-      // могилы
+      // могилы (средний план, едва отстают от камеры)
       s.stones.forEach(st => {
-        const x = st.x - s.px * 0.55;
-        if (x < -40 || x > api.W + 40) return;
+        const x = st.x - cam * 0.92;
+        if (x < -60 || x > api.W + 60) return;
         ctx.fillStyle = '#232323';
         ctx.fillRect(x, api.H - 90 - st.h, st.w, st.h);
-        if (st.cross) { ctx.fillRect(x + st.w / 2 - 2, api.H - 90 - st.h - 12, 4, 12); ctx.fillRect(x + st.w / 2 - 7, api.H - 90 - st.h - 8, 14, 4); }
+        if (st.cross) { ctx.fillRect(x + st.w / 2 - 2, api.H - 90 - st.h - 14, 4, 14); ctx.fillRect(x + st.w / 2 - 8, api.H - 90 - st.h - 9, 16, 4); }
       });
       // скамейка
-      const bx = 560 - s.px * 0.55;
+      const bx = seatX - 45;
       ctx.fillStyle = '#141414';
       ctx.fillRect(bx, api.H - 116, 90, 8); ctx.fillRect(bx + 6, api.H - 108, 6, 18); ctx.fillRect(bx + 78, api.H - 108, 6, 18);
-      ctx.fillRect(bx, api.H - 140, 90, 6); ctx.fillRect(bx + 6, api.H - 134, 6, 14); ctx.fillRect(bx + 78, api.H - 134, 6, 14);
+      ctx.fillRect(bx, api.H - 150, 90, 6); ctx.fillRect(bx + 6, api.H - 144, 6, 18); ctx.fillRect(bx + 78, api.H - 144, 6, 18);
       // ворона
       ctx.fillStyle = '#000';
       const cy = 90 + Math.sin(api.time * 3) * 8;
-      ctx.fillRect(s.crowX, cy, 14, 6); ctx.fillRect(s.crowX + 10, cy - 4, 6, 6);
-      // женщина
-      const gx = 120;
+      ctx.fillRect(s.crowX, cy, 16, 7); ctx.fillRect(s.crowX + 12, cy - 5, 7, 7);
+      // женщина — крупно
+      ctx.fillStyle = '#101010';
       if (!s.sitting) {
-        const step = (api.key('ArrowRight') || api.key('KeyD')) ? Math.sin(api.time * 6) * 3 : 0;
-        ctx.fillStyle = '#101010';
-        ctx.fillRect(gx - 6, api.H - 118, 12, 26);
-        ctx.fillRect(gx - 6, api.H - 96 + step, 4, 8); ctx.fillRect(gx + 2, api.H - 96 - step, 4, 8);
-        ctx.fillRect(gx - 5, api.H - 126, 10, 9); // голова
-        ctx.fillStyle = '#d9d9d9'; ctx.fillRect(gx - 5, api.H - 126, 10, 3);
-        ctx.strokeStyle = '#101010'; ctx.lineWidth = 2; // трость
-        ctx.beginPath(); ctx.moveTo(gx + 8, api.H - 96); ctx.lineTo(gx + 12, api.H - 88); ctx.stroke();
+        const walking = api.key('ArrowRight') || api.key('KeyD') || api.key('ArrowLeft') || api.key('KeyA');
+        const step = walking ? Math.sin(api.time * 6) * 4 : 0;
+        ctx.fillRect(GX - 10, api.H - 146, 20, 44);                 // платье
+        ctx.fillRect(GX - 9, api.H - 102 + step, 6, 12);            // нога
+        ctx.fillRect(GX + 3, api.H - 102 - step, 6, 12);            // нога
+        ctx.fillRect(GX - 8, api.H - 164, 16, 18);                  // голова
+        ctx.fillStyle = '#d9d9d9'; ctx.fillRect(GX - 8, api.H - 164, 16, 5); // седина
+        ctx.strokeStyle = '#101010'; ctx.lineWidth = 3;             // трость
+        ctx.beginPath(); ctx.moveTo(GX + 13, api.H - 112); ctx.lineTo(GX + 19, api.H - 90); ctx.stroke();
       } else {
-        ctx.fillStyle = '#101010';
-        ctx.fillRect(gx - 14, api.H - 122, 26, 14);
-        ctx.fillRect(gx - 14, api.H - 108, 5, 14);
-        ctx.fillStyle = '#d9d9d9'; ctx.fillRect(gx - 14, api.H - 122, 26, 4);
-        // птица на спинке
+        // плавно досаживает до скамейки и садится
+        const t = s.sitAnim * (2 - s.sitAnim);
+        const hx = GX + (seatX - GX) * t;
+        ctx.fillRect(hx - 10, api.H - 148, 20, 32);                 // торс
+        ctx.fillRect(hx - 10, api.H - 120, 26, 9);                  // бёдра на сиденье
+        ctx.fillRect(hx + 10, api.H - 112, 7, 22);                  // голень
+        ctx.fillRect(hx - 8, api.H - 166, 16, 18);                  // голова
+        ctx.fillStyle = '#d9d9d9'; ctx.fillRect(hx - 8, api.H - 166, 16, 5);
+        // птица на спинке скамейки
         if (s.bird > 0.4) {
           ctx.fillStyle = '#3b3b3b';
-          const py = api.H - 132 + Math.sin(api.time * 4) * 1.5;
-          ctx.fillRect(gx + 16, py, 8, 6); ctx.fillRect(gx + 22, py - 3, 4, 4);
+          const py = api.H - 162 + Math.sin(api.time * 4) * 1.5;
+          ctx.fillRect(seatX + 28, py, 10, 8); ctx.fillRect(seatX + 35, py - 4, 5, 5);
         }
       }
+      // ограда — передний план, движется быстрее всех (параллакс)
+      const foff = (cam * 1.6) % 26;
+      ctx.fillStyle = '#161616';
+      for (let x = -foff - 26; x < api.W + 26; x += 26) ctx.fillRect(x, api.H - 150, 5, 60);
+      ctx.fillRect(0, api.H - 136, api.W, 4);
       // дождь
       ctx.strokeStyle = 'rgba(255,255,255,0.25)'; ctx.lineWidth = 1;
       ctx.beginPath();
-      s.drops.forEach(d => { const x = (d.x - s.px * 0.3) % (api.W + 40); ctx.moveTo(x, d.y); ctx.lineTo(x - 3, d.y + 12); });
+      s.drops.forEach(d => { const x = (d.x - cam * 0.3) % (api.W + 40); ctx.moveTo(x, d.y); ctx.lineTo(x - 3, d.y + 12); });
       ctx.stroke();
       // текстовые вставки
       ctx.textAlign = 'center';
       ctx.fillStyle = 'rgba(255,255,255,0.75)';
       ctx.font = 'italic 16px Georgia, serif';
-      if (!s.sitting && !s.leaving) ctx.fillText(s.px < 60 ? 'идите направо. медленно.' : '↓ сесть на скамейку', api.W / 2, 60);
-      if (s.sitting && s.sitT < 2) ctx.fillText('…', api.W / 2, 60);
-      if (s.sitting && s.sitT >= 6 && s.sitT < 9) ctx.fillText('«Забери меня, отец, куда ты угодно»', api.W / 2, 60);
-      if (s.sitting && s.sitT >= 12 && s.bird >= 1) ctx.fillText('птица села рядом. ↑ встать и уйти', api.W / 2, 60);
-      drawHud(api, 'THE GRAVEYARD · after Tale of Tales (2008)', s.sitting ? 'вы сидите: ' + Math.floor(s.sitT) + ' сек' : 'никаких целей. никаких очков.');
+      const nearBench = Math.abs(s.px - BENCH) < 60;
+      if (!s.sitting && !s.leaving) ctx.fillText(s.px < 260 ? 'идите направо. медленно.' : (nearBench ? '↓ сесть на скамейку' : ''), api.W / 2, 60);
+      if (s.sitting && s.sitAnim >= 1 && s.sitT < 2) ctx.fillText('…', api.W / 2, 60);
+      if (s.sitting && s.sitAnim >= 1 && s.sitT >= 6 && s.sitT < 9) ctx.fillText('«Забери меня, отец, куда ты угодно»', api.W / 2, 60);
+      if (s.sitting && s.sitAnim >= 1 && s.sitT >= 12 && s.bird >= 1) ctx.fillText('птица села рядом. ↑ встать и уйти', api.W / 2, 60);
+      drawHud(api, 'THE GRAVEYARD · after Tale of Tales (2008)', s.sitting ? 'вы сидите: ' + (s.sitAnim >= 1 ? Math.floor(s.sitT) : 0) + ' сек' : 'никаких целей. никаких очков.');
     },
   };
 
