@@ -36,16 +36,17 @@
 
   <div class="arc-modal" id="arcModal">
     <div class="arc-modal-box">
+      <button class="arc-modal-close" id="amClose" aria-label="Закрыть">×</button>
       <div class="arc-modal-head">
         <div>
           <h3 id="amTitle"></h3>
           <div class="sub" id="amSub"></div>
+          <p class="arc-desc" id="amDesc"></p>
         </div>
-        <div style="display:flex; gap:8px; align-items:center;">
-          <a class="btn btn-ghost" id="amOfficial" style="font-size:12px; padding:8px 14px;" target="_blank" rel="noopener">оригинал ↗</a>
-          <a class="btn btn-ghost" id="amLesson" style="font-size:12px; padding:8px 14px;">о работе →</a>
-          <button class="arc-modal-close" id="amClose" aria-label="Закрыть">×</button>
-        </div>
+      </div>
+      <div class="arc-modal-actions">
+        <a class="btn btn-ghost" id="amOfficial" target="_blank" rel="noopener">оригинал ↗</a>
+        <a class="btn btn-ghost" id="amLesson">о работе →</a>
       </div>
       <div id="amHolder"></div>
       <p class="ga-hint" id="amHint"></p>
@@ -112,6 +113,7 @@
       const L = GAME_COURSE[idx];
       document.getElementById('amTitle').textContent = '«' + L.work + '» — ' + L.artist + ', ' + L.year;
       document.getElementById('amSub').textContent = 'веб-оммаж · ' + L.title;
+      document.getElementById('amDesc').textContent = L.summary;
       document.getElementById('amLesson').href = 'course.html#/' + idx;
       const amOff = document.getElementById('amOfficial');
       amOff.href = L.official.url;
