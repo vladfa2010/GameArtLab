@@ -36,17 +36,17 @@
     <div class="path-grid">
       <a class="path-card" href="course.html">
         <div class="num">01</div>
-        <canvas class="path-art" id="artCourse" width="300" height="220" aria-hidden="true"></canvas>
         <h3>Курс</h3>
         <p>Десять уроков: от Super Mario Clouds Кори Арканджела до снов Kikiyama. Внизу каждого урока — играбельный веб-оммаж работы: прочитали теорию — и сразу проживаете её.</p>
         <span class="go">Начать с урока 01 →</span>
+        <canvas class="path-art" id="artCourse" width="640" height="176" aria-hidden="true"></canvas>
       </a>
       <a class="path-card" href="arcade.html">
         <div class="num">02</div>
-        <canvas class="path-art" id="artArcade" width="300" height="220" aria-hidden="true"></canvas>
         <h3>Витрина</h3>
         <p>Все десять работ в одной сетке: облака, которые можно сломать, очередь в MoMA, остров-оркестр, сон с эффектами. Без установки — запуск прямо на странице, рекорды в вашем браузере.</p>
         <span class="go">Играть →</span>
+        <canvas class="path-art" id="artArcade" width="640" height="176" aria-hidden="true"></canvas>
       </a>
     </div>
 
@@ -179,9 +179,9 @@
       // 01 Курс: медленный дрейф облаков разного масштаба
       setup('artCourse', (ctx, W, H, t) => {
         const wrap = (x, sp) => ((((x - t * sp) % (W + 140)) + (W + 140)) % (W + 140)) - 70;
-        cloud(ctx, wrap(20, 10), 60, 6, 0.5);
-        cloud(ctx, wrap(150, 16), 140, 4, 0.35);
-        cloud(ctx, wrap(280, 7), 185, 8, 0.6);
+        cloud(ctx, wrap(30, 12), 42, 5, 0.5);
+        cloud(ctx, wrap(260, 19), 96, 4, 0.35);
+        cloud(ctx, wrap(470, 8), 122, 6, 0.6);
       });
       // 02 Витрина: пришелец, мерцающие звёзды и редкие выстрелы
       const INV = [
@@ -209,11 +209,11 @@
           for (let cx = 0; cx < row.length; cx++)
             if (row[cx] === 'X') ctx.fillRect(bx + cx * px, by + ry * px, px, px);
         });
-        [70, 152, 232].forEach((sx, i) => {
+        [120, 320, 520].forEach((sx, i) => {
           const ph = (t * 0.85 + i * 0.83) % 2.6;
           if (ph < 1) {
             ctx.fillStyle = 'rgba(255,107,107,0.75)';
-            ctx.fillRect(sx, H - 16 - ph * (H - 70), 4, 14);
+            ctx.fillRect(sx, H - 14 - ph * (H - 70), 4, 14);
           }
         });
       });
