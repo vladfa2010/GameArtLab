@@ -400,10 +400,14 @@ const GameArt = (() => {
         ctx.fillRect(60 - 22, py + 2, 8, 8);
       }
       ctx.restore();
-      // виньетка: зрение сужается
-      const vg = ctx.createRadialGradient(api.W / 2, horizon, half * 0.5, api.W / 2, horizon, half * (1.7 - k * 0.5));
+      // виньетка: зрение сужается (центр — на персонаже, а не на экране)
+      const vg = ctx.createRadialGradient(90, horizon, half * 0.5, 90, horizon, half * 2.0);
       vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,0.92)');
       ctx.fillStyle = vg; ctx.fillRect(0, 0, api.W, api.H);
+      // мягкий ореол вокруг героя — чтобы фигура читалась на любом фоне
+      const halo = ctx.createRadialGradient(60, py, 2, 60, py, 30);
+      halo.addColorStop(0, 'rgba(255,255,255,0.14)'); halo.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.fillStyle = halo; ctx.fillRect(20, py - 40, 90, 80);
       // шкала жизни
       ctx.fillStyle = 'rgba(255,255,255,0.15)'; ctx.fillRect(30, api.H - 26, api.W - 60, 3);
       ctx.fillStyle = '#79A0FF'; ctx.fillRect(30, api.H - 26, (api.W - 60) * Math.min(1, k), 3);
@@ -656,11 +660,13 @@ const GameArt = (() => {
   GAMES.artist = {
     touch: ['a'],
     init(api) {
-      return { scene: 'ticket', q: 0, stepT: 4 + api.rand() * 4, stepFlag: false, museum: 9 * 60 + 30, gaze: 0, need: 12, blink: 3, blinkT: 0, wait: 0 };
+      return { scene: 'ticket', q: 0, stepT: 4 + api.rand() * 4, stepMax: 4, stepFlag: false, flagAge: 0, museum: 9 * 60 + 30, gaze: 0, need: 12, blink: 3, blinkT: 0, wait: 0, earlyFlash: 0, stepFlash: 0 };
     },
     update(api, s, dt) {
       if (api.over) return;
-      s.museum += dt * 30; // ускоренное музейное время
+      if (s.scene !== 'ticket') s.museum += dt * 30; // ускоренное музейное время (не на экране билета)
+      s.earlyFlash = Math.max(0, s.earlyFlash - dt);
+      s.stepFlash = Math.max(0, s.stepFlash - dt);
       const hh = Math.floor(s.museum / 60) % 24, mm = Math.floor(s.museum % 60);
       const open = hh >= 10 && hh < 18;
       const act = api.wasPressed('Space') || api.wasPressed('KeyZ') || api.wasPressed('Enter') || api.pointer.clicked;
@@ -673,10 +679,11 @@ const GameArt = (() => {
         if (!open) { api.end('МУЗЕЙ ЗАКРЫТ\nMoMA работает с 10:00 до 18:00\n(в игре Барра — в реальном времени)'); return; }
         if (s.stepFlag) {
           s.flagAge = (s.flagAge || 0) + dt;
-          if (act) { s.stepFlag = false; s.q += 1; api.tone(500, 0.08, 'square', 0.04); s.stepT = 3 + api.rand() * 4; }
-          else if (s.flagAge > 3) { s.stepFlag = false; s.q = Math.max(0, s.q - 1); s.stepT = 3 + api.rand() * 4; }
+          if (act) { s.stepFlag = false; s.q += 1; s.stepFlash = 0.6; api.tone(500, 0.08, 'square', 0.04); s.stepMax = 3 + api.rand() * 4; s.stepT = s.stepMax; }
+          else if (s.flagAge > 3) { s.stepFlag = false; s.q = Math.max(0, s.q - 1); s.stepMax = 3 + api.rand() * 4; s.stepT = s.stepMax; }
         } else {
           s.stepT -= dt;
+          if (act) { s.earlyFlash = 1.4; api.tone(180, 0.12, 'square', 0.03); } // раннее нажатие — сразу понятная реакция
           if (s.stepT <= 0) { s.stepFlag = true; s.flagAge = 0; }
         }
         if (s.q >= 12) { s.scene = 'table'; api.chord([262, 330, 392], 2, 'sine', 0.05); }
@@ -710,7 +717,9 @@ const GameArt = (() => {
         ctx.fillStyle = '#222'; ctx.font = '700 14px Inter, sans-serif';
         ctx.fillText('ВХОДНОЙ БИЛЕТ — $0 (игра бесплатна)', api.W / 2, 315);
         ctx.fillStyle = '#a00'; ctx.font = 'italic 15px Georgia, serif';
-        ctx.fillText('пробел — купить билет', api.W / 2, 420);
+        ctx.globalAlpha = 0.55 + 0.45 * Math.sin(api.time * 4);
+        ctx.fillText('нажмите A / пробел / клик — купить билет', api.W / 2, 420);
+        ctx.globalAlpha = 1;
       } else if (s.scene === 'gallery') {
         ctx.fillStyle = '#ddd3bf'; ctx.fillRect(0, 0, api.W, api.H);
         // картины
@@ -750,12 +759,31 @@ const GameArt = (() => {
         // сигнал шага
         if (s.stepFlag) {
           ctx.fillStyle = '#c00'; ctx.font = '700 22px Inter, sans-serif';
-          ctx.fillText('ПРОБЕЛ — ШАГ ВПЕРЁД', api.W / 2, 420);
+          ctx.fillText('ПРОБЕЛ / A — ШАГ ВПЕРЁД', api.W / 2, 420);
           ctx.font = '13px Inter, sans-serif';
           ctx.fillText('пропустите сигнал — потеряете место в очереди', api.W / 2, 445);
         } else {
           ctx.fillStyle = '#777'; ctx.font = 'italic 14px Georgia, serif';
-          ctx.fillText('очередь движется очень медленно. ждите.', api.W / 2, 430);
+          ctx.fillText('очередь движется очень медленно. нажимайте ТОЛЬКО на красный сигнал.', api.W / 2, 430);
+          // шкала ожидания следующего сигнала — видно, что процесс идёт
+          const bw2 = 220, bx2 = api.W / 2 - bw2 / 2;
+          ctx.fillStyle = 'rgba(0,0,0,0.10)'; ctx.fillRect(bx2, 452, bw2, 6);
+          ctx.fillStyle = '#79A0FF'; ctx.fillRect(bx2, 452, bw2 * (1 - Math.max(0, s.stepT) / s.stepMax), 6);
+          ctx.fillStyle = '#999'; ctx.font = '11px Inter, sans-serif';
+          ctx.fillText('следующий шаг', api.W / 2, 474);
+        }
+        // реакция на раннее нажатие — мгновенная обратная связь
+        if (s.earlyFlash > 0) {
+          ctx.globalAlpha = Math.min(1, s.earlyFlash);
+          ctx.fillStyle = '#b06000'; ctx.font = '700 16px Inter, sans-serif';
+          ctx.fillText('слишком рано — ждите красный сигнал!', api.W / 2, 510);
+          ctx.globalAlpha = 1;
+        }
+        if (s.stepFlash > 0) {
+          ctx.globalAlpha = Math.min(1, s.stepFlash * 2);
+          ctx.fillStyle = '#2a7d2a'; ctx.font = '700 16px Inter, sans-serif';
+          ctx.fillText('шаг вперёд!', api.W / 2, 510);
+          ctx.globalAlpha = 1;
         }
         ctx.fillStyle = '#333'; ctx.font = '12px Inter, sans-serif';
         ctx.fillText('впереди вас: ~' + Math.max(0, Math.ceil(12 - s.q)) + ' человек', api.W / 2, 150);
@@ -790,7 +818,7 @@ const GameArt = (() => {
         ctx.font = '12px Inter, sans-serif'; ctx.fillStyle = '#777';
         ctx.fillText('выдержано: ' + s.gaze.toFixed(1) + ' / ' + s.need + ' сек', api.W / 2, 495);
       }
-      drawHud(api, 'THE ARTIST IS PRESENT · after Pippin Barr (2011)', 'пробел/клик — действие');
+      drawHud(api, 'THE ARTIST IS PRESENT · after Pippin Barr (2011)', 'A / пробел / клик — действие');
     },
   };
 
