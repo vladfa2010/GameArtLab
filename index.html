@@ -36,12 +36,14 @@
     <div class="path-grid">
       <a class="path-card" href="course.html">
         <div class="num">01</div>
+        <canvas class="path-art" id="artCourse" width="300" height="220" aria-hidden="true"></canvas>
         <h3>Курс</h3>
         <p>Десять уроков: от Super Mario Clouds Кори Арканджела до снов Kikiyama. Внизу каждого урока — играбельный веб-оммаж работы: прочитали теорию — и сразу проживаете её.</p>
         <span class="go">Начать с урока 01 →</span>
       </a>
       <a class="path-card" href="arcade.html">
         <div class="num">02</div>
+        <canvas class="path-art" id="artArcade" width="300" height="220" aria-hidden="true"></canvas>
         <h3>Витрина</h3>
         <p>Все десять работ в одной сетке: облака, которые можно сломать, очередь в MoMA, остров-оркестр, сон с эффектами. Без установки — запуск прямо на странице, рекорды в вашем браузере.</p>
         <span class="go">Играть →</span>
@@ -149,6 +151,72 @@
       }
       resize(); window.addEventListener('resize', resize);
       requestAnimationFrame(frame);
+    })();
+
+    // Пиксель-арт в карточках путей: облака (после Arcangel) и восьмибитный пришелец
+    (function () {
+      const reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      function setup(id, draw) {
+        const cv = document.getElementById(id);
+        if (!cv) return;
+        const ctx = cv.getContext('2d');
+        const W = cv.width, H = cv.height;
+        let t = Math.random() * 40;
+        (function frame() {
+          t += 0.016;
+          ctx.clearRect(0, 0, W, H);
+          draw(ctx, W, H, t);
+          if (!reduced) requestAnimationFrame(frame);
+        })();
+      }
+      function cloud(ctx, x, y, u, alpha) {
+        ctx.fillStyle = 'rgba(235,238,255,' + alpha + ')';
+        [[1, 5], [0, 7], [0, 7], [1, 5]].forEach((r, i) => ctx.fillRect(x + r[0] * u, y + i * u, r[1] * u, u));
+        ctx.fillRect(x + 2 * u, y - u, 3 * u, u);
+        ctx.fillStyle = 'rgba(121,160,255,' + (alpha * 0.55) + ')';
+        ctx.fillRect(x + u, y + 3 * u, 5 * u, u);
+      }
+      // 01 Курс: медленный дрейф облаков разного масштаба
+      setup('artCourse', (ctx, W, H, t) => {
+        const wrap = (x, sp) => ((((x - t * sp) % (W + 140)) + (W + 140)) % (W + 140)) - 70;
+        cloud(ctx, wrap(20, 10), 60, 6, 0.5);
+        cloud(ctx, wrap(150, 16), 140, 4, 0.35);
+        cloud(ctx, wrap(280, 7), 185, 8, 0.6);
+      });
+      // 02 Витрина: пришелец, мерцающие звёзды и редкие выстрелы
+      const INV = [
+        '..X.....X..',
+        '...X...X...',
+        '..XXXXXXX..',
+        '.XX.XXX.XX.',
+        'XXXXXXXXXXX',
+        'X.XXXXXXX.X',
+        'X.X.....X.X',
+        '...XX.XX...'
+      ];
+      setup('artArcade', (ctx, W, H, t) => {
+        for (let i = 0; i < 8; i++) {
+          const sx = (i * 37 + 13) % W, sy = (i * 53 + 7) % (H - 60);
+          const a = 0.22 + 0.35 * Math.abs(Math.sin(t * 1.5 + i * 1.31));
+          ctx.fillStyle = i % 3 ? 'rgba(235,238,255,' + a + ')' : 'rgba(121,160,255,' + a + ')';
+          ctx.fillRect(sx, sy, 4, 4);
+        }
+        const px = 5, bw = INV[0].length * px;
+        const bx = (W - bw) / 2 + Math.sin(t * 0.8) * 20;
+        const by = 62 + Math.sin(t * 2.1) * 5;
+        ctx.fillStyle = 'rgba(155,227,107,0.8)';
+        INV.forEach((row, ry) => {
+          for (let cx = 0; cx < row.length; cx++)
+            if (row[cx] === 'X') ctx.fillRect(bx + cx * px, by + ry * px, px, px);
+        });
+        [70, 152, 232].forEach((sx, i) => {
+          const ph = (t * 0.85 + i * 0.83) % 2.6;
+          if (ph < 1) {
+            ctx.fillStyle = 'rgba(255,107,107,0.75)';
+            ctx.fillRect(sx, H - 16 - ph * (H - 70), 4, 14);
+          }
+        });
+      });
     })();
 
     // Лента работ: карточки-ссылки на витрину + живые миниатюры из движка
