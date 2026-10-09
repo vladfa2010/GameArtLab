@@ -3,7 +3,7 @@
    ============================================================ */
 
 /* --- игровой модуль в уроке --- */
-.ga-holder { grid-column: 1 / -1; }
+.ga-holder { grid-column: 1 / -1; user-select: none; -webkit-user-select: none; }
 .ga-shell { position: relative; width: 100%; }
 .ga-canvas {
   display: block;
@@ -55,6 +55,9 @@
   cursor: pointer;
   touch-action: none;
   -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 .ga-tbtn:hover { border-color: #79A0FF; color: #79A0FF; }
 .ga-tbtn:active { background: rgba(121,160,255,0.45); border-color: #79A0FF; }
