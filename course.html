@@ -136,8 +136,6 @@
             <p class="ga-hint">Управление: <code>${lesson.controls}</code>. Это художественная отсылка к оригиналу, а не копия: она повторяет механику и настроение работы ${lesson.artist}.</p>
             <div class="ga-actions">
               <button class="btn btn-primary" id="gaRestart">↺ Начать заново</button>
-              <a class="btn btn-ghost" href="arcade.html">Витрина всех работ →</a>
-              <a class="btn btn-ghost" href="${lesson.official.url}" target="_blank" rel="noopener">Оригинал — ${lesson.official.label} ↗</a>
               <span class="ga-score" id="gaScore"></span>
             </div>
           </div>
@@ -145,6 +143,11 @@
           <div class="exercise">
             <h5>Задание</h5>
             <p>${lesson.exercise}</p>
+          </div>
+
+          <div class="lesson-links">
+            <a class="btn btn-ghost" href="arcade.html">Витрина всех работ →</a>
+            <a class="btn btn-ghost" href="${lesson.official.url}" target="_blank" rel="noopener">Оригинал — ${lesson.official.label} ↗</a>
           </div>
 
           <div class="lesson-actions">

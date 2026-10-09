@@ -28,6 +28,7 @@
   font-size: 11.5px;
 }
 .ga-actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+.lesson-links { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 26px; }
 .ga-score {
   margin-left: auto;
   color: #6b6b70;
