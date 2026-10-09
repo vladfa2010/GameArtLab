@@ -137,7 +137,7 @@
 .arc-modal-head h3 { margin: 0; font-size: 20px; max-width: 100%; }
 .arc-modal-head .sub { color: #939393; font-size: 13px; margin-top: 3px; }
 .arc-desc { color: #cfcfd4; font-size: 13.5px; line-height: 1.65; margin: 10px 0 0; max-width: 760px; }
-.arc-modal-actions { display: flex; gap: 8px; flex-wrap: wrap; margin: 14px 0 2px; }
+.arc-modal-actions { display: flex; gap: 8px; flex-wrap: wrap; margin: 14px 0 20px; }
 .arc-modal-actions .btn { font-size: 12px; padding: 8px 14px; }
 .arc-modal-close {
   position: absolute;
